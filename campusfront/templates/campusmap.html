@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load leaflet_tags %}
+
+{% block floatingelement %}
+    <div class="searchbar" id="searchbar">
+        <img id='logo' src="{% static 'img/UoN_Logo.png' %}" alt="UON Logo">
+        <!-- <input id='searchinput' type="text" placeholder="Search here.."> -->
+    </div>
+{% endblock %}
+
+{% block mapcontent %}
+    <!-- Load the data from the views.py -->
+    {{ buildings|json_script:"buildings-data"}}
+    {{ schools|json_script:"schools-data"}}
+
+    <!-- Initialize the map -->
+    {% leaflet_map "Campus3Dmap" callback="window.map_initialization" %}
+{% endblock %}
+
+{% block footer %}
+    <div class="bottom-bar">
+        <div class="tab">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </div>
+        <div class="tab">
+            <i class="fas fa-search"></i>
+            <span>Contribute</span>
+        </div>
+        <div class="tab" onclick="openAboutModal()">
+            <i class="fas fa-info-circle"></i>
+            <span>About</span>
+        </div>
+
+            <!-- Modal for About information -->
+        <div id="aboutModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeAboutModal()">&times;</span>
+                <p><strong>Campus3D</strong> has been developed in partial fulfillment of the Requirements for an MSC in GIS</p>
+                <p> It is designed to facilitate navigation within the campus.</p>
+                <p>&copy; Ogola Pascal</p>
+            </div>
+        </div>
+
+        <script src="{% static 'js/aboutmodal.js' %}"></script>
+    </div>
+{% endblock %}
