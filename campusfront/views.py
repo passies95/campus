@@ -21,7 +21,8 @@ class CampusMapView(TemplateView):
         schools = School.objects.all()
         school_geojson = serialize("geojson", schools, geometry_field='geom') # pass the geom field for correct serialization
         context["schools"] = json.loads(school_geojson)
-        departments = Department.objects.all()
-        departments_geojson = serialize("geojson", departments)
-        context["departments"] = json.loads(departments_geojson)
+        # Pass the departments and the related school info
+        # departments = Department.objects.all()
+        # departments_geojson = serialize("geojson", departments)
+        # context["departments"] = json.loads(departments_geojson)
         return context
