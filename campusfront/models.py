@@ -22,6 +22,15 @@ class Building(gismodels.Model):
     photo = models.ImageField(upload_to='photos', null=True, blank=True)
     geom = gismodels.PolygonField()
 
+class Office(models.Model):
+    officeID = models.IntegerField(primary_key=True)
+    buildingID = models.ForeignKey(
+        to=Building,
+        on_delete=models.CASCADE,
+        db_index=True
+    )
+    officename = models.CharField(max_length=256)
+
 class School(models.Model):
     schoolID = models.IntegerField(unique=True)
     name = models.CharField(max_length=256)
@@ -39,6 +48,14 @@ class Department(models.Model):
         db_index=True,
         null=True
     )
+    officeID = models.ForeignKey(
+        to=Office,
+        on_delete=models.CASCADE,
+        db_index=True,
+        null=True,
+        blank=True
+    )
+    office = gismodels.PointField(null=True, blank=True)
 
     class Meta:
          verbose_name_plural = 'Departments'
@@ -51,15 +68,6 @@ class LectureRoom(models.Model):
         db_index=True
     )
     roomName = models.CharField(max_length=10)
-
-class Office(models.Model):
-    officeID = models.IntegerField(primary_key=True)
-    buildingID = models.ForeignKey(
-        to=Building,
-        on_delete=models.CASCADE,
-        db_index=True
-    )
-    officename = models.CharField(max_length=256)
 
 class OtherRoom(models.Model):
     roomID = models.IntegerField(primary_key=True)

@@ -13,7 +13,7 @@
     <!-- Load the data from the views.py -->
     {{ buildings|json_script:"buildings-data"}}
     {{ schools|json_script:"schools-data"}}
-    <!-- {{ departments|json_script:"departments-data"}} -->
+    {{ departments|json_script:"departments-data"}}
 
     <!-- Initialize the map -->
     {% leaflet_map "Campus3Dmap" callback="window.map_initialization" %}
@@ -25,25 +25,34 @@
             <i class="fas fa-home"></i>
             <span>Home</span>
         </div>
-        <div class="tab">
+        <div class="tab" onclick="opengoToLocationModal()">
             <i class="fas fa-search"></i>
-            <span>Contribute</span>
+            <span>Go To Location</span>
         </div>
         <div class="tab" onclick="openAboutModal()">
             <i class="fas fa-info-circle"></i>
             <span>About</span>
         </div>
 
-            <!-- Modal for About information -->
+            <!-- Modal Dialogs information -->
+            <!-- Modal for Gotolocation -->
+        <div id="goToLocationModal" class="searchmodal">
+            <div class="search-modal-content">
+                <span class="close" onclick="closegoToLocationModal()">&times;</span>
+                <p>&copy; Ogola Pascal</p>
+            </div>
+        </div>
+        <!-- Modal for about -->
         <div id="aboutModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeAboutModal()">&times;</span>
                 <p><strong>Campus3D</strong> has been developed in partial fulfillment of the Requirements for an MSC in GIS</p>
                 <p> It is designed to facilitate navigation within the campus.</p>
+                <p> Boundaries shown on the map are not authoritative and does not reflect endorsement of the same</p>
                 <p>&copy; Ogola Pascal</p>
             </div>
         </div>
 
-        <script src="{% static 'js/aboutmodal.js' %}"></script>
+        <script src="{% static 'js/modal.js' %}"></script>
     </div>
 {% endblock %}

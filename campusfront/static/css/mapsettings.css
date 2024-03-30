@@ -27,7 +27,7 @@ body {
     top: 3px;
     left: 10px;
     width: calc(100% - 20px);
-    height: 30px;
+    height: 35px;
     padding: 10px;
     z-index: 1000; /* Set a high z-index to ensure it appears on top of the map */
 }
@@ -117,6 +117,27 @@ body {
     right: 10px;
     font-size: 20px;
     cursor: pointer;
+}
+
+.searchmodal {
+    display: none;
+    position: fixed;
+    top: 58px;
+    left: 20px;
+    width: 50%;
+    height: 50%;
+    background-color: rgba(0,0,0,0.7);
+    z-index: 2000;
+}
+
+.search-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;
+    text-align: center;
 }
 
 

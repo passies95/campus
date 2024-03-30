@@ -15,14 +15,19 @@ class CampusMapView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context =  super().get_context_data(**kwargs)
+
+        # Serialize the buildings
         buildings = Building.objects.all()
         building_geojson = serialize("geojson", buildings, geometry_field='geom') # pass the geom field for correct serialization
         context["buildings"] = json.loads(building_geojson)
+
+        # serialize the schools
         schools = School.objects.all()
         school_geojson = serialize("geojson", schools, geometry_field='geom') # pass the geom field for correct serialization
         context["schools"] = json.loads(school_geojson)
-        # Pass the departments and the related school info
-        # departments = Department.objects.all()
-        # departments_geojson = serialize("geojson", departments)
-        # context["departments"] = json.loads(departments_geojson)
+
+        # Serialize departments and their related school information
+        departments = Department.objects.prefetch_related('schoolID').all()
+        departments_geojson = serialize("geojson", departments)
+        context["departments"] = json.loads(departments_geojson)
         return context

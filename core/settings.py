@@ -190,5 +190,10 @@ LEAFLET_CONFIG = {
             'js': 'js/leaflet-panel-layers.min.js',
             'auto-include': True,
         },
+        'leaflet-routing-machine': {
+            'css': 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css',
+            'js': 'https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js',
+            'auto-include': True,
+        },
     }
 }
