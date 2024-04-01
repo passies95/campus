@@ -64,17 +64,6 @@ function map_initialization (map, options) {
             layer: cartocdnLayer.addTo(map)
         }
     ];
-    // const baseLayers = [
-    //     {
-    //         group: "Base Layers",
-    //         layers: [
-    //             {
-    //                 name: "Carto",
-    //                 layer: cartocdnLayer.addTo(map)
-    //             }
-    //         ]
-    //     }
-    // ];
     
     // Initialize overlays
     const overlays = [];
@@ -82,7 +71,7 @@ function map_initialization (map, options) {
     // Initialize the panel layers control
     const panelLayers = new L.Control.PanelLayers(baseLayers, overlays, {
         collapsibleGroups: true,
-        collapsed: true,
+        collapsed: false,
         compact: true,
         position: 'topright'
     });
@@ -138,8 +127,8 @@ function map_initialization (map, options) {
                             fillColor: 'blue',
                             fillOpacity: 0.2,}
                 } else {
-                    return {color: 'red',
-                    fillColor: 'red',
+                    return {color: 'orange',
+                    fillColor: 'orange',
                     fillOpacity: 0.2,}
                 }
             },
@@ -162,6 +151,9 @@ function map_initialization (map, options) {
 
                 // Add popup to map using the bindpopup method
                 layer.bindPopup(feature_content);
+                layer.on('mouseover', function(e){
+                    this.openPopup()
+                })
 
                 // Add a custom property to the layer to usef or later referencing
                 layer.layerName = 'Building';
@@ -214,6 +206,7 @@ function map_initialization (map, options) {
         // Add GeoJSON layers to the map
         var schools_feature = L.geoJSON(parsedSchoolsData, {
             style: {
+                // fill : false,
                 color: 'yellow',
                 // fillColor: 'blue',
                 // fillOpacity: 0.2,
@@ -274,7 +267,7 @@ function map_initialization (map, options) {
             propertyName:'name', 
             initial: false,
             collapsed: false,
-            zoom:20,
+            zoom:19,
             textErr:'No match found. Try a different search e.g AW402',
             textPlaceholder:'Search here..e.g Building, School name',
             buildTip: function(text, val) {
@@ -287,32 +280,159 @@ function map_initialization (map, options) {
         // Listen to the 'search:locationfound' event
         // Variable to store the highlighted layer
         var highlightedLayer;
+        // variable to store feature coordinates of the searched feature
+        var feature_coords;
+        // Declare routingControl variable outside of the event listener
+        var routingControl;
+
+        // Flag to retainn previous search if button is clicked
+        let previousSearchQuery;
+        var buttonClicked = false;
 
         // Listen to the 'search:locationfound' event
         searchControl.on('search:locationfound', function(event) {
+            // Handle the layer associated with the found location
+            var layer = handleFoundLocation(event.layer);
+        
+            // Create and display popup
+            createAndDisplayPopup(event.latlng);
+        });
+
+        // Function to handle the layer associated with the found location
+        function handleFoundLocation(layer) {
+            // Change the previous coordinates to nul if no button was clicked
+            if (!buttonClicked) {
+                feature_coords = null;
+                previousSearchQuery = null
+            }
             // Deselect the previous highlight, if any
             if (highlightedLayer) {
                 highlightedLayer.setStyle({ fillOpacity: 0.2 });
             }
 
-            // Highlight the layer associated with the found location
-            var layer = event.layer;
-            var feature_coords;
             if (layer) {
                 // Highlight the layer by setting fill opacity to 1
                 layer.setStyle({ fillOpacity: 1 });
-                // console.log(layer.layerName)
-                if(layer.layerName ==='Building'){
-                    if (layer.feature.properties.entrace){
-                        const coordinateString = layer.feature.properties.entrace
-                        console.log(coordinateString);
-                    }
+
+                if (layer.layerName === 'Building') {
+                    // Handle building layer
+                    handleBuildingLayer(layer);
+                } else {
+                    // Handle other layers
+                    console.log('Layer other than Building found.');
                 }
 
                 // Store the highlighted layer for future reference
                 highlightedLayer = layer;
             }
-        });
+
+            return layer;
+        }
+
+        // Function to handle the building layer
+        function handleBuildingLayer(layer) {
+            if (layer.feature.properties.entrace) {
+                const coordinateString = layer.feature.properties.entrace;
+                // Extracting the coordinates using string manipulation
+                const startIndex = coordinateString.indexOf('(') + 1;
+                const endIndex = coordinateString.indexOf(')');
+                const coordinatesString = coordinateString.substring(startIndex, endIndex);
+                // Splitting the coordinates string by space and parsing latitude and longitude
+                const coordinates = coordinatesString.split(' ').map(parseFloat);
+                feature_coords = coordinates; // Assign value to feature_coords
+            } else {
+                const feature_lat = layer._map._lastCenter.lat;
+                const feature_long = layer._map._lastCenter.lng;
+                feature_coords = [feature_long, feature_lat]; // Place in the long lat notation
+            }
+        }
+
+        // function createButton(label, container) {
+        function createButton(label, container) {
+            var btn = L.DomUtil.create('button', 'navigation-popup-button', container);
+            btn.setAttribute('type', 'button');
+            btn.innerHTML = label;
+            return btn;
+        }
+
+        // Function to create and display popup with navigation options
+        function createAndDisplayPopup(latlng) {
+            // Create a popup with a question and buttons to choose navigation options
+            var navigation_container = L.DomUtil.create('div', 'navigation_container');
+            question = L.DomUtil.create('div', '', navigation_container),
+            startBtn = createButton('Start from this location', navigation_container);
+            destBtn = createButton('Go to this location', navigation_container);
+
+            // Create a popup with a question and buttons to choose navigation options
+            question.textContent = 'Would you like to navigate?';
+            var navigation_popup = L.popup()
+                .setContent(navigation_container)
+                .setLatLng(latlng)
+                .openOn(map);
+
+            // Event listener for the "Start from this location" button
+            startBtn.addEventListener('click', function() {
+                var searchInput = document.querySelector('.leaflet-control-search input.search-input');
+                if (searchInput) {
+                    // Clear the search input
+                    searchInput.value = '';
+                    // Focus on the search input field to allow the user to enter the destination
+                    searchInput.focus();
+                }
+                // Close the popup after clicking the button
+                navigation_popup.remove();
+                // Set the buttonClicked flag to true
+                buttonClicked = true;
+                previousSearchQuery = feature_coords
+                console.log(previousSearchQuery)
+            });
+
+            // Event listener for the "Go to this location" button
+            destBtn.addEventListener('click', function() {
+                // Capture the second set of points and add route
+                captureSecondSetAndRoute(latlng);
+                // Close the popup after clicking the button
+                navigation_popup.remove();
+                // Set the buttonClicked flag to true
+                buttonClicked = true;
+            });
+        }
+
+        
+        // Function to add a route
+        function addRouteToSearchedPoint(waypoints) {
+            if (waypoints) {
+                // Remove existing routing control
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                }
+
+                // Add a new routing control
+                routingControl = L.Routing.control({
+                    waypoints: waypoints
+                }).addTo(map);
+            }
+        }
+
+        // Function to modify the routing machine continer
+        function checkElementLoaded() {
+            var element = document.querySelector('.leaflet-routing-container');
+            if (element) {
+                // console.log('div loaded successfully');
+
+                var closeButton = document.createElement('button');
+                closeButton.innerHTML = '<i class="fas fa-times"></i>';
+                closeButton.classList.add('close-button');
+
+                // Add click event listener to close the container
+                closeButton.addEventListener('click', function() {
+                    element.style.display = 'none'; // Hide the container when close button is clicked
+                });
+
+                // Append close button to the container
+                element.appendChild(closeButton);
+            }
+        }
 
         // Listen to click events on the map to deselect the highlighted layer
         map.on('click', function() {
@@ -332,20 +452,48 @@ function map_initialization (map, options) {
                 }
             });
         });
+        
     } else {
         console.error('Leaflet Search plugin is not loaded.');
     }
+
 
     // Adding a routing control
     // map click event
     map.on('click', function(e) {
         console.log(e)
     })
-    // L.Routing.control({
-    //     waypoints: [
-    //       L.latLng(-1.2725848,36.8070418),
-    //       L.latLng(-1.2789091,36.8174241)
-    //     ]
-    // }).addTo(map);
+
+    // Modify the Leaflet Route Control
+    // document.addEventListener("DOMContentLoaded", function() {
+    //     // Wait for the DOM to be fully loaded
+
+    //     // Function to add a close button to the Leaflet Routing Machine container
+    //     function addCloseButton() {
+    //         // Target the Leaflet Routing Machine container
+    //         var routingContainer = document.querySelector('.leaflet-routing-container');
+
+    //         // Check if the container exists
+    //         if (routingContainer) {
+    //             // Create a close button element
+    //             var closeButton = document.createElement("button");
+    //             closeButton.classList.add("close-button");
+    //             closeButton.textContent = "Close";
+
+    //             // Append the close button to the container
+    //             routingContainer.appendChild(closeButton);
+    //         }
+    //     }
+
+    //     // Call the function to add the close button
+    //     addCloseButton();
+    // });
+    
+    
+
+    
+
+
+
 
 }

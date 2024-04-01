@@ -6,10 +6,10 @@ function openAboutModal() {
 function closeAboutModal() {
     document.getElementById("aboutModal").style.display = "none";
 }
-function opengoToLocationModal() {
-    document.getElementById("goToLocationModal").style.display = "block";
+function openReportModal() {
+    document.getElementById("reportModal").style.display = "block";
 }
 
-function closegoToLocationModal() {
-    document.getElementById("goToLocationModal").style.display = "none";
+function closeReportModal() {
+    document.getElementById("reportModal").style.display = "none";
 }

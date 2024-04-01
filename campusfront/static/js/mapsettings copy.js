@@ -5,6 +5,7 @@
 const API_KEY  = '3A9BRVqaxuV6mvPuJQPM';
 const mediaURL = '/media/'
 const GEOTIFF_FILE_PATH  = "static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif";
+const uon_building_path = "static/basemap/uon_building.geojson";
 
 // MapTiler layer initialization
 const maptilerLayer = L.maptilerLayer({
@@ -18,21 +19,29 @@ const cartocdnLayer = L.tileLayer(
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>',
 })
 
+// Define the promise outside the function
+const campusHighResBasemapPromise = fetch(GEOTIFF_FILE_PATH)
+    .then(response => response.arrayBuffer())
+    .then(arrayBuffer => parseGeoraster(arrayBuffer))
+    .then(georaster => {
+        console.log("georaster:", georaster);
+
+        const campusHighResBasemap = new GeoRasterLayer({
+            attribution: "Maxar Technologies",
+            georaster: georaster,
+            opacity: 10,
+            resolution: 512,
+        });
+
+        return campusHighResBasemap;
+    })
+    .catch(error => {
+        console.error('Error loading GeoRasterLayer:', error);
+        throw error;
+    });
+
 // Function for map initialization
 function map_initialization (map, options) {
-
-    // Change the controls to the bottom right to prevent from being hidden by the search bar
-    map.zoomControl.setPosition('bottomright');
-
-    // Adjust the position of Layer Control below the search bar
-    let layerControl;
-    const searchbarElement = document.querySelector('.searchbar');
-    const searchbarHeight = searchbarElement ? searchbarElement.clientHeight : 0;
-    if (layerControl) {
-        layerControl.getContainer().style.position = 'absolute';
-        layerControl.getContainer().style.top = `${searchbarHeight + 10}px`; // Move it 10px below the bottom of the searchbar
-        layerControl.getContainer().style.right = '5px'; // Adjust the value as needed
-    }
 
     // Enable and Start continuous GPS tracking
     // map.locate({
@@ -47,15 +56,59 @@ function map_initialization (map, options) {
     //     // Use the location for further processing, such as routing
     // });
 
+    
+    // Create an object to hold the base layers
+    const baseLayers = [
+        {
+            name: "Carto",
+            layer: cartocdnLayer.addTo(map)
+        }
+    ];
+    
+    // Initialize overlays
+    const overlays = [];
+    
+    // Initialize the panel layers control
+    const panelLayers = new L.Control.PanelLayers(baseLayers, overlays, {
+        collapsibleGroups: true,
+        collapsed: true,
+        compact: true,
+        position: 'topright'
+    });
+    
+    map.addControl(panelLayers);
+    
+    // Add the Maxar Image to the base layers
+    campusHighResBasemapPromise.then(campusHighResBasemap => {
+        // Add basemap to the baseLayers group
+        panelLayers.addBaseLayer({ name: 'Maxar', layer: campusHighResBasemap });
+        // panelLayers.addBaseLayer({ name: 'Maxar', layer: campusHighResBasemap }, 'Base Layers');
+    });
+    
+    // Adjust the position of the panel control below the search bar
+    const searchbarElement = document.querySelector('.searchbar');
+    const searchbarHeight = searchbarElement ? searchbarElement.clientHeight : 0;
+    const panelContainer = panelLayers.getContainer();
+    if (panelContainer) {
+        panelContainer.style.position = 'absolute';
+        panelContainer.style.top = `${searchbarHeight + 20}px`; // Move it 10px below the bottom of the searchbar
+        panelContainer.style.right = '5px'; // Adjust the value as needed
+    }
+
+    // Change the controls to the bottom right to prevent from being hidden by the search bar
+    map.zoomControl.setPosition('bottomright');
+
     // Add the Datasets to the Map
-    // Create a LayerGroup to hold the building features
+    // Create a LayerGroup to hold the data layers
     const dataLayerGroup = L.layerGroup();
 
     // Retrieve the buildings, schools data that was added to html using the json script method
     const building_data = document.getElementById("buildings-data");
     const schools_data = document.getElementById("schools-data");
-    // const departments_data = document.getElementById("departments-data");
+    const departments_data = document.getElementById("departments-data");
+    
     // console.log(departments_data)
+    // console.log(schools_data)
 
     // Check if the building data is present
     if (building_data) {
@@ -74,8 +127,8 @@ function map_initialization (map, options) {
                             fillColor: 'blue',
                             fillOpacity: 0.2,}
                 } else {
-                    return {color: 'red',
-                    fillColor: 'red',
+                    return {color: 'orange',
+                    fillColor: 'orange',
                     fillOpacity: 0.2,}
                 }
             },
@@ -102,25 +155,56 @@ function map_initialization (map, options) {
                 // Add a custom property to the layer to usef or later referencing
                 layer.layerName = 'Building';
             },
-        })
+        }).addTo(map);
         dataLayerGroup.addLayer(building_feature);
+        console.log(building_feature)
     } else {
         console.error("Building data not found.");
     }
 
+    // Fit the data to the map using the bounds of the data
+    const buildingBounds = building_feature.getBounds();
+
+    // Fit the map view to the bounds of the building data
+    map.fitBounds(buildingBounds);
+
+    // Add the Data to the Panel Layers
+    panelLayers.addOverlay({ name: 'Buildings', layer: building_feature });
+
     // Add the Schools Data
     // Check if the building data is present
-    if (schools_data) {
+    // Function to fetch departments data
+
+    if (schools_data && departments_data ) {
         // Parse the GeoJSON data
         const parsedSchoolsData = JSON.parse(schools_data.textContent);
+        const parsedDepartmentsData = JSON.parse(departments_data.textContent);
 
         // Log the parsed data to the console to verify
-        console.log(parsedSchoolsData);
+        // console.log(parsedSchoolsData);
+        // console.log(parsedDepartmentsData);
+
+        parsedDepartmentsData.features.forEach(departmentFeature => {
+            // Access the schoolID property within department properties
+            const schoolID = departmentFeature.properties.schoolID;
+            console.log()
+    
+            // Find the corresponding school feature in parsedSchoolsData
+            const schoolFeature = parsedSchoolsData.features.find(school => school.properties.schoolID === schoolID);
+    
+            // If school feature is found, log its geometry to console
+            if (schoolFeature) {
+                console.log("School Geometry:", schoolFeature.geometry);
+            } else {
+                console.error("School not found for department:", departmentFeature.properties.name);
+            }
+        });
 
         // Add GeoJSON layers to the map
         var schools_feature = L.geoJSON(parsedSchoolsData, {
             style: {
-                color: 'red',
+                // fill : false,
+                color: 'yellow',
                 // fillColor: 'blue',
                 // fillOpacity: 0.2,
             },
@@ -140,16 +224,32 @@ function map_initialization (map, options) {
                 layer.bindPopup(feature_content);
 
                 // Add a custom property to the layer to usef or later referencing
-                layer.layerName = 'Schools';
+                layer.layerName = 'Faculty';
             },
-        })//.addTo(map);
+        }).addTo(map).bringToBack();
         dataLayerGroup.addLayer(schools_feature);
+
+        // Parse the Departments Data
+        var department_data = L.geoJSON(parsedDepartmentsData) 
+
     } else {
-        console.error("Schools data not found.");
+        console.error("Schools or Departments data not found.");
     }
 
-    // Add the LayerGroup to the map
-    dataLayerGroup.addTo(map);
+    // Add the Layer to the panel layer
+    panelLayers.addOverlay({ name: 'Schools', layer: schools_feature });
+
+    // // Add the Departments data
+    // if (departments_data) {
+    //     // Parse the GeoJSON data
+    //     const parsedDepartmentsData = JSON.parse(departments_data.textContent);
+
+    //     // Log the parsed data to the console to verify
+    //     // console.log(parsedDepartmentsData);
+     
+    // } else {
+    //     console.error("Departments data not found.");
+    // }
 
     // Add Search Functionality
     if (typeof L.Control.Search !== 'undefined') {
@@ -164,7 +264,7 @@ function map_initialization (map, options) {
             propertyName:'name', 
             initial: false,
             collapsed: false,
-            zoom:20,
+            zoom:19,
             textErr:'No match found. Try a different search e.g AW402',
             textPlaceholder:'Search here..e.g Building, School name',
             buildTip: function(text, val) {
@@ -174,116 +274,225 @@ function map_initialization (map, options) {
             }
         });
         map.addControl(searchControl);
+        // Listen to the 'search:locationfound' event
+        // Variable to store the highlighted layer
+        var highlightedLayer;
+        // variable to store feature coordinates of the searched feature
+        var feature_coords;
+        // Declare routingControl variable outside of the event listener
+        var routingControl;
+        
+        
+        // function createButton(label, container) {
+        function createButton(label, container) {
+            var btn = L.DomUtil.create('button', 'navigation-popup-button', container);
+            btn.setAttribute('type', 'button');
+            btn.innerHTML = label;
+            return btn;
+        }
+
+        // Flag to retainn previous search if button is clicked
+        let previousSearchQuery;
+        var buttonClicked = false;
+
+        // Listen to the 'search:locationfound' event
+        searchControl.on('search:locationfound', function(event) {
+            // Reset feature_coords to remove all the previous searches
+            if (!buttonClicked) {
+                feature_coords = null;
+                previousSearchQuery = null
+            }
+            // console.log(feature_coords)
+            // Deselect the previous highlight, if any
+            if (highlightedLayer) {
+                highlightedLayer.setStyle({ fillOpacity: 0.2 });
+            }
+
+            // Highlight the layer associated with the found location
+            var layer = event.layer;
+            
+            if (layer) {
+                // Highlight the layer by setting fill opacity to 1
+                layer.setStyle({ fillOpacity: 1 });
+                // console.log(layer.layerName)
+                if(layer.layerName ==='Building'){
+                    if (layer.feature.properties.entrace){
+                        const coordinateString = layer.feature.properties.entrace
+                        console.log(coordinateString);
+                        // Extracting the coordinates using string manipulation
+                        const startIndex = coordinateString.indexOf('(') + 1;
+                        const endIndex = coordinateString.indexOf(')');
+                        const coordinatesString = coordinateString.substring(startIndex, endIndex);
+
+                        // Splitting the coordinates string by space and parsing latitude and longitude
+                        const coordinates = coordinatesString.split(' ').map(parseFloat);
+                        feature_coords = coordinates; // Assign value to feature_coords
+
+                        // console.log(feature_coords)
+                        
+                    } else {
+                        console.log(layer)
+                        const feature_lat = layer._map._lastCenter.lat
+                        const feature_long = layer._map._lastCenter.lng
+                        feature_coords = [feature_long,feature_lat] // Place in the long lat notatition so that it is similar
+                        console.log(feature_coords)
+                    }
+                } else {
+                    // Handle coordinates differently fot the other layers
+                    //TODO
+                    console.log('Layer other than Building found.');
+                }
+
+                // Store the highlighted layer for future reference
+                highlightedLayer = layer;
+
+                // Add a route to the searched point
+                // addRouteToSearchedPoint();
+
+                // Check if the routing container has been added
+                // checkElementLoaded();
+
+                var navigation_container = L.DomUtil.create('div', 'navigation_container');
+                question = L.DomUtil.create('div', '', navigation_container),
+                startBtn = createButton('Start from this location', navigation_container);
+                destBtn = createButton('Go to this location', navigation_container);
+
+                // Create a popup with a question and buttons to choose navigation options
+                question.textContent = 'Would you like to navigate?';
+                var navigation_popup = L.popup()
+                    .setContent(navigation_container)
+                    .setLatLng(event.latlng)
+                    .openOn(map);
+
+                // Event listener for the "Start from this location" button
+                startBtn.addEventListener('click', function() {
+                    var searchInput = document.querySelector('.leaflet-control-search input.search-input');
+                    if (searchInput) {
+                        // searchInput.style.display = 'block';
+                        searchInput.value = '';
+
+                        // Focus on the search input field to allow the user to enter the destination
+                        searchInput.focus();
+                        buttonClicked = true;
+                        previousSearchQuery = feature_coords
+                        console.log(previousSearchQuery)
+                    }
+
+                    // Close the popup after clicking the button
+                    navigation_popup.remove();
+
+                    // console.log('Starting navigation from clicked location');
+                    // addRouteToSearchedPoint([L.latLng(feature_coords[1], feature_coords[0]), L.latLng(-1.2725848, 36.8070418)]);
+                    // navigation_popup.remove(); // Close the popup after clicking the button
+                });
+
+                // Event listener for the "Go to this location" button
+                destBtn.addEventListener('click', function() {
+                    console.log('Navigating to clicked location');
+                    addRouteToSearchedPoint([L.latLng(-1.2725848, 36.8070418), L.latLng(feature_coords[1], feature_coords[0])]);
+                    navigation_popup.remove(); // Close the popup after clicking the button
+                });
+
+                // setTimeout(checkElementLoaded, 1000);
+            }
+
+            // console.log(feature_coords)
+        });
+
+        function addRouteToSearchedPoint(waypoints) {
+            if (waypoints) {
+                // Remove existing routing control
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                }
+
+                // Add a new routing control
+                routingControl = L.Routing.control({
+                    waypoints: waypoints
+                }).addTo(map);
+            }
+        }
+
+        // Function to modify the routing machine continer
+        function checkElementLoaded() {
+            var element = document.querySelector('.leaflet-routing-container');
+            if (element) {
+                // console.log('div loaded successfully');
+
+                var closeButton = document.createElement('button');
+                closeButton.innerHTML = '<i class="fas fa-times"></i>';
+                closeButton.classList.add('close-button');
+
+                // Add click event listener to close the container
+                closeButton.addEventListener('click', function() {
+                    element.style.display = 'none'; // Hide the container when close button is clicked
+                });
+
+                // Append close button to the container
+                element.appendChild(closeButton);
+            }
+        }
+
+        // Listen to click events on the map to deselect the highlighted layer
+        map.on('click', function() {
+            // Deselect the highlighted layer, if any
+            if (highlightedLayer) {
+                highlightedLayer.setStyle({ fillOpacity: 0.2 });
+                highlightedLayer = null; // Clear the highlighted layer reference
+            }
+        });
+        // Attach click event listener to each feature layer
+        dataLayerGroup.eachLayer(function(layer) {
+            layer.on('click', function() {
+                // Check if a layer is currently highlighted
+                if (highlightedLayer) {
+                    // Deselect the previously highlighted layer
+                    highlightedLayer.setStyle({ fillOpacity: 0.2 });
+                }
+            });
+        });
+        
     } else {
         console.error('Leaflet Search plugin is not loaded.');
     }
 
-    // // Create an object to hold the base layers
-    // const baseLayers = {
-    //     Carto : cartocdnLayer.addTo(map)
-    //     // "Basic": maptilerLayer.addTo(map),
-    // };
-    // Load a custom map tile for the maptiler 
-    //maptilerLayer.addTo(map);
 
-    // Fetch and Display custom basemap of the university
-    // fetch(GEOTIFF_FILE_PATH )
-    //     .then(response => response.arrayBuffer())
-    //     .then(arrayBuffer => {
-    //         parseGeoraster(arrayBuffer).then(georaster => {
-    //         console.log("georaster:", georaster);
-
-    //         const campusHighResBasemap = new GeoRasterLayer({
-    //             attribution: "Maxar Technologies",
-    //             georaster: georaster,
-    //             opacity: 10,
-    //             // Higher resolution values improve the rendered image quality however they increase the response time
-    //             // Resolution is defined as 64, 128, 256, 512
-    //             resolution: 512,
-    //             // pixelValuesToColorFn: values => values[0] === 42 ? '#ffffff' : '#000000',
-    //         });
-    //         // Add GeoRasterLayer to the base layers object
-    //         baseLayers["Satellite"] = campusHighResBasemap.addTo(map);
-
-    //         // Create and add layer control to the map outside the fetch block
-    //         layerControl = L.control.layers(null, baseLayers, { position: 'topright' }).addTo(map);
-
-    //         map.fitBounds(campusHighResBasemap.getBounds());
-
-    //         // Adjust the position of Layer Control below the search bar
-    //         const searchbarElement = document.querySelector('.searchbar');
-    //         const searchbarHeight = searchbarElement ? searchbarElement.clientHeight : 0;
-    //         layerControl.getContainer().style.position = 'absolute';
-    //         layerControl.getContainer().style.top = `${searchbarHeight + 10}px`; // Move it 10px below the bottom of the searchbar
-    //         layerControl.getContainer().style.right = '5px'; // Adjust the value as needed
-
-    //     });
-    // });
-
-    const campusHighResBasemapPromise = fetch(GEOTIFF_FILE_PATH)
-    .then(response => response.arrayBuffer())
-    .then(arrayBuffer => parseGeoraster(arrayBuffer))
-    .then(georaster => {
-        console.log("georaster:", georaster);
-
-        const campusHighResBasemap = new GeoRasterLayer({
-            attribution: "Maxar Technologies",
-            georaster: georaster,
-            opacity: 10,
-            // Higher resolution values improve the rendered image quality however they increase the response time
-            // Resolution is defined as 64, 128, 256, 512
-            resolution: 512,
-            // pixelValuesToColorFn: values => values[0] === 42 ? '#ffffff' : '#000000',
-        });
-
-        return campusHighResBasemap;
+    // Adding a routing control
+    // map click event
+    map.on('click', function(e) {
+        console.log(e)
     })
-    .catch(error => {
-        console.error('Error loading GeoRasterLayer:', error);
-        throw error; // Rethrow the error to handle it outside of this code block
-    });
 
-    // Create an object to hold the base layers
-    // const baseLayers = {
-    //     Carto : cartocdnLayer.addTo(map)
-    //     // "Basic": maptilerLayer.addTo(map),
-    // };
+    // Modify the Leaflet Route Control
+    // document.addEventListener("DOMContentLoaded", function() {
+    //     // Wait for the DOM to be fully loaded
 
-    var baseLayers = [
-        {
-            group: "Satellite Layers",
-            // icon: iconByName('parking'),
-            collapsed: true,
-            layers: [
-                {
-                    name: "Carto",
-                    // icon: iconByName('drinking_water'),
-                    layer: cartocdnLayer
-                },
-            ]
-        }
-    ];
+    //     // Function to add a close button to the Leaflet Routing Machine container
+    //     function addCloseButton() {
+    //         // Target the Leaflet Routing Machine container
+    //         var routingContainer = document.querySelector('.leaflet-routing-container');
+
+    //         // Check if the container exists
+    //         if (routingContainer) {
+    //             // Create a close button element
+    //             var closeButton = document.createElement("button");
+    //             closeButton.classList.add("close-button");
+    //             closeButton.textContent = "Close";
+
+    //             // Append the close button to the container
+    //             routingContainer.appendChild(closeButton);
+    //         }
+    //     }
+
+    //     // Call the function to add the close button
+    //     addCloseButton();
+    // });
     
-    layerControl = new L.Control.PanelLayers(baseLayers, {
-        collapsibleGroups: true,
-        collapsed: true
-    });
     
-    map.addControl(layerControl);
 
-    // layerControl = L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
+    
 
-    campusHighResBasemapPromise.then(campusHighResBasemap => {
-        map.fitBounds(campusHighResBasemap.getBounds());
-        baseLayers["Maxar"] = campusHighResBasemap.addTo(map);
-        
-    });
 
-    if (typeof L.Control.PanelLayers !== 'undefined') {
-        console.log('Leaflet PanelLayers plugin is loaded successfully.');
-    } else {
-        pass
-    }
 
 
 }
