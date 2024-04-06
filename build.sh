@@ -3,9 +3,9 @@
 set -o errexit
 
 # Modify this line as needed for your package manager (pip, poetry, etc.)
-apt install gdal-bin libgdal-dev
-workon <env>
-pip install --global-option=build_ext --global-option="-I/usr/include/gdal" GDAL==`gdal-config --version`
+# Check system architecture
+architecture=$(uname -m)
+echo "System architecture: $architecture"
 pip install -r requirements.txt
 
 # Convert static asset files
