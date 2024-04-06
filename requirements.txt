@@ -7,6 +7,7 @@ certifi==2023.7.22
 charset-normalizer==3.3.0
 click==8.1.7
 colorama==0.4.6
+dj-database-url==2.1.0
 Django==4.2.6
 django-geojson==4.0.0
 django-leaflet==0.29.0
@@ -20,9 +21,10 @@ jsonschema-specifications==2023.12.1
 jupyter_core==5.7.1
 multidict==6.0.5
 nbformat==5.9.2
-numpy
+numpy==1.22.4
 pigar==2.1.2
-Pillow
+Pillow==10.0.1
+pipreqs==0.4.13
 platformdirs==4.2.0
 psycopg==3.1.12
 psycopg2-binary==2.9.9
