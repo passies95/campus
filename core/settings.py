@@ -37,13 +37,7 @@ DEBUG = ast.literal_eval(os.getenv('DEBUG', 'False'))
 
 # Add the local computed Ip address to the list of allowed hosts
 # This should be removed during deployement
-# ALLOWED_HOSTS = [
-#     # The first address is the ipv4 address to view the dev server on mobile as shown in
-#     # https://www.geeksforgeeks.org/how-to-access-pc-django-server-in-android/
-#     "192.168.8.101",
-#     "0.0.0.0",
-#     "127.0.0.1"
-# ]
+
 ALLOWED_HOSTS = ["*"]
 
 
@@ -98,19 +92,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.contrib.gis.db.backends.postgis",
-#         "NAME": "campus",
-#         "USER": "postgres",
-#         'PASSWORD': '08pas053',
-#         "HOST": "",
-#         'PORT': '5432',
-
-#     }
-# }
 DATABASES = {
-    "default": dj_database_url.parse(DATABASE_URL)
+    'default': dj_database_url.config(
+        default=DATABASE_URL, 
+        engine='django.contrib.gis.db.backends.postgis'
+    )
 }
 
 
@@ -176,9 +162,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Set the following paths for use within windows
 # Paths may not work on other systems
-# GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\bin\gdal301'
-# GEOS_LIBRARY_PATH = r'C:\OSGeo4W64\bin\geos_c.dll'
-# PROJ_LIBRARY_PATH = r'C:\OSGeo4W64\bin\proj'
+GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\bin\gdal301'
+GEOS_LIBRARY_PATH = r'C:\OSGeo4W64\bin\geos_c.dll'
+PROJ_LIBRARY_PATH = r'C:\OSGeo4W64\bin\proj'
 
 
 # Leafet configurations
