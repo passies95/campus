@@ -15,6 +15,7 @@ from pathlib import Path
 from django.conf.urls.static import static
 import dj_database_url
 from dotenv import load_dotenv
+import ast
 
 # Load environment variables from .env file
 load_dotenv()
@@ -31,7 +32,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG')
+DEBUG = ast.literal_eval(os.getenv('DEBUG', 'False'))
 
 
 # Add the local computed Ip address to the list of allowed hosts
@@ -160,15 +161,12 @@ if not DEBUG:    # Tell Django to copy static assets into a path called `staticf
     # and renames the files with unique names for each version to support long-term caching
     # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-# STORAGES = {
-#     "staticfiles": {
-#         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-#     },
-# }
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+else:
+    STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
