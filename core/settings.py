@@ -162,9 +162,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Set the following paths for use within windows
 # Paths may not work on other systems
-# GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\bin\gdal301'
-# GEOS_LIBRARY_PATH = r'C:\OSGeo4W64\bin\geos_c.dll'
-# PROJ_LIBRARY_PATH = r'C:\OSGeo4W64\bin\proj'
+if os.name == 'nt':  # Check if the operating system is Windows
+    GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\bin\gdal301'
+    GEOS_LIBRARY_PATH = r'C:\OSGeo4W64\bin\geos_c.dll'
+    PROJ_LIBRARY_PATH = r'C:\OSGeo4W64\bin\proj'
 
 
 # Leafet configurations
