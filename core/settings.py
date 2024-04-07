@@ -36,13 +36,14 @@ DEBUG = True
 
 # Add the local computed Ip address to the list of allowed hosts
 # This should be removed during deployement
-ALLOWED_HOSTS = [
-    # The first address is the ipv4 address to view the dev server on mobile as shown in
-    # https://www.geeksforgeeks.org/how-to-access-pc-django-server-in-android/
-    "192.168.8.101",
-    "0.0.0.0",
-    "127.0.0.1"
-]
+# ALLOWED_HOSTS = [
+#     # The first address is the ipv4 address to view the dev server on mobile as shown in
+#     # https://www.geeksforgeeks.org/how-to-access-pc-django-server-in-android/
+#     "192.168.8.101",
+#     "0.0.0.0",
+#     "127.0.0.1"
+# ]
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
