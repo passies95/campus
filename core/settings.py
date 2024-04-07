@@ -183,7 +183,7 @@ LEAFLET_CONFIG = {
 
     'PLUGINS': {
         'AwesomeMarkers': {
-            'css': ['http://code.ionicframework.com/ionicons/1.5.2/css/ionicons.min.css', 'package/awesome-markers/leaflet.awesome-markers.css'],
+            'css': ['https://code.ionicframework.com/ionicons/1.5.2/css/ionicons.min.css', 'package/awesome-markers/leaflet.awesome-markers.css'],
             'js': 'package/awesome-markers/leaflet.awesome-markers.js',
             'auto-include': True,
         },

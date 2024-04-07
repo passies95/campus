@@ -4,8 +4,9 @@
 // Constants
 const API_KEY  = '3A9BRVqaxuV6mvPuJQPM';
 const mediaURL = '/media/'
-const GEOTIFF_FILE_PATH  = "static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif";
-const uon_building_path = "static/basemap/uon_building.geojson";
+// const GEOTIFF_FILE_PATH  = "static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif";
+const GEOTIFF_FILE_PATH = 'https://raw.githubusercontent.com/passies95/campus/main/campusfront/static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif';
+
 
 // MapTiler layer initialization
 const maptilerLayer = L.maptilerLayer({
