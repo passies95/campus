@@ -25,7 +25,7 @@ const campusHighResBasemapPromise = fetch(GEOTIFF_FILE_PATH)
     .then(response => response.arrayBuffer())
     .then(arrayBuffer => parseGeoraster(arrayBuffer))
     .then(georaster => {
-        console.log("georaster:", georaster);
+        // console.log("georaster:", georaster);
 
         const campusHighResBasemap = new GeoRasterLayer({
             attribution: "Maxar Technologies",
@@ -117,7 +117,7 @@ function map_initialization (map, options) {
         const parsedBuildingData = JSON.parse(building_data.textContent);
 
         // Log the parsed data to the console to verify
-        console.log(parsedBuildingData);
+        // console.log(parsedBuildingData);
 
         // Add GeoJSON layers to the map
         var building_feature = L.geoJSON(parsedBuildingData, {
@@ -161,7 +161,7 @@ function map_initialization (map, options) {
             },
         }).addTo(map);
         dataLayerGroup.addLayer(building_feature);
-        console.log(building_feature)
+        // console.log(building_feature)
     } else {
         console.error("Building data not found.");
     }

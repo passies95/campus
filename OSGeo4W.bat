@@ -1,5 +1,5 @@
-set OSGEO4W_ROOT=C:\Program Files\QGIS 3.16
-set GDAL_DATA=%OSGEO4W_ROOT%\apps\gdal\share\gdal
+set OSGEO4W_ROOT=C:\OSGeo4W64
+set GDAL_DATA=%OSGEO4W_ROOT%\share\gdal
 set PROJ_LIB=%OSGEO4W_ROOT%\share\proj
 set PATH=%PATH%;%OSGEO4W_ROOT%\bin
 reg ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path /t REG_EXPAND_SZ /f /d "%PATH%"

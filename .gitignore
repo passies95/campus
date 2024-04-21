@@ -1,5 +1,4 @@
-node_modules
-envs
 .env
 backup
 __pycache__
+core/settings.py

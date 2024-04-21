@@ -33,7 +33,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ast.literal_eval(os.getenv('DEBUG', 'False'))
-
+# DEBUG = True
 
 # Add the local computed Ip address to the list of allowed hosts
 # This should be removed during deployement
@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'leaflet',
     'djgeojson',
     'campusfront',
+    # 'import_export',
 
 ]
 
@@ -142,7 +143,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 if not DEBUG:    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
     # and renames the files with unique names for each version to support long-term caching
     # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
@@ -151,6 +152,9 @@ if not DEBUG:    # Tell Django to copy static assets into a path called `staticf
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
+    WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
+    '.jpg', '.jpeg', '.png', '.gif',  
+    )
 else:
     STATIC_URL = '/static/'
 
@@ -166,7 +170,6 @@ if os.name == 'nt':  # Check if the operating system is Windows
     GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\bin\gdal301'
     GEOS_LIBRARY_PATH = r'C:\OSGeo4W64\bin\geos_c.dll'
     PROJ_LIBRARY_PATH = r'C:\OSGeo4W64\bin\proj'
-
 
 # Leafet configurations
 
@@ -212,3 +215,11 @@ LEAFLET_CONFIG = {
         },
     }
 }
+
+# # Import Export configuration
+# IMPORT_EXPORT_USE_TRANSACTIONS = True
+# IMPORT_EXPORT_SKIP_ADMIN_LOG = True
+
+# from import_export.formats.base_formats import CSV, XLSX
+# IMPORT_FORMATS = [CSV, XLSX]
+# EXPORT_FORMATS = [XLSX]
