@@ -4,8 +4,8 @@
 // Constants
 const API_KEY  = '3A9BRVqaxuV6mvPuJQPM';
 const mediaURL = '/media/'
-// const GEOTIFF_FILE_PATH  = "static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif";
-const GEOTIFF_FILE_PATH = 'https://raw.githubusercontent.com/passies95/campus/main/campusfront/static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif';
+const GEOTIFF_FILE_PATH  = "static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif";
+// const GEOTIFF_FILE_PATH = 'https://raw.githubusercontent.com/passies95/campus/main/campusfront/static/basemap/UON_KE_Nairobi_19Q2_V0_R4C5_cog.tif';
 
 
 // MapTiler layer initialization
@@ -152,9 +152,9 @@ function map_initialization (map, options) {
 
                 // Add popup to map using the bindpopup method
                 layer.bindPopup(feature_content);
-                layer.on('mouseover', function(e){
-                    this.openPopup()
-                })
+                // layer.on('mouseover', function(e){
+                //     this.openPopup()
+                // })
 
                 // Add a custom property to the layer to usef or later referencing
                 layer.layerName = 'Building';
@@ -286,22 +286,35 @@ function map_initialization (map, options) {
         // Declare routingControl variable outside of the event listener
         var routingControl;
 
-        // Flag to retainn previous search if button is clicked
+        // Flag to retain previous search if button is clicked
+        let isFirstSearch = true;
         let previousSearchQuery;
         var buttonClicked = false;
 
         // Listen to the 'search:locationfound' event
         searchControl.on('search:locationfound', function(event) {
             // Handle the layer associated with the found location
-            var layer = handleFoundLocation(event.layer);
+            if (isFirstSearch) {
+                // Handle the first search location found event
+                var layer = handleFoundLocation(event.layer);
+                console.log(layer)
         
-            // Create and display popup
-            createAndDisplayPopup(event.latlng);
+                // Create and display popup
+                createAndDisplayPopup(event.latlng);
+                console.log('Is first Search')
+            } else {
+                // Handle the second search location found event
+                var layer = handleSecondLocationFound(event.layer);
+                console.log(previousSearchQuery)
+                console.log(feature_coords)
+                addRouteToSearchedPoint(previousSearchQuery.reverse(), feature_coords.reverse())
+            }
+            
         });
 
         // Function to handle the layer associated with the found location
         function handleFoundLocation(layer) {
-            // Change the previous coordinates to nul if no button was clicked
+            // Change the previous coordinates to null if no button was clicked
             if (!buttonClicked) {
                 feature_coords = null;
                 previousSearchQuery = null
@@ -330,6 +343,30 @@ function map_initialization (map, options) {
             return layer;
         }
 
+        // Function to handle second location
+        function handleSecondLocationFound(layer) {
+            if (layer) {
+                // Highlight the layer by setting fill opacity to 1
+                layer.setStyle({ fillOpacity: 1 });
+
+                if (layer.layerName === 'Building') {
+                    // Handle building layer
+                    feature_coords= handleBuildingLayer(layer);
+                } else {
+                    // Handle other layers
+                    console.log('Layer other than Building found.');
+                }
+
+                // Store the highlighted layer for future reference
+                highlightedLayer = layer;
+                console.log(feature_coords)
+                // return back the flag to true
+                isFirstSearch = true
+            }
+
+            return layer;
+        }
+
         // Function to handle the building layer
         function handleBuildingLayer(layer) {
             if (layer.feature.properties.entrace) {
@@ -346,6 +383,7 @@ function map_initialization (map, options) {
                 const feature_long = layer._map._lastCenter.lng;
                 feature_coords = [feature_long, feature_lat]; // Place in the long lat notation
             }
+            return feature_coords;
         }
 
         // function createButton(label, container) {
@@ -373,25 +411,20 @@ function map_initialization (map, options) {
 
             // Event listener for the "Start from this location" button
             startBtn.addEventListener('click', function() {
-                var searchInput = document.querySelector('.leaflet-control-search input.search-input');
-                if (searchInput) {
-                    // Clear the search input
-                    searchInput.value = '';
-                    // Focus on the search input field to allow the user to enter the destination
-                    searchInput.focus();
-                }
                 // Close the popup after clicking the button
                 navigation_popup.remove();
                 // Set the buttonClicked flag to true
                 buttonClicked = true;
                 previousSearchQuery = feature_coords
                 console.log(previousSearchQuery)
+                captureSecondpoint();
             });
 
             // Event listener for the "Go to this location" button
             destBtn.addEventListener('click', function() {
+                previousSearchQuery = latlng
                 // Capture the second set of points and add route
-                captureSecondSetAndRoute(latlng);
+                captureSecondpoint();
                 // Close the popup after clicking the button
                 navigation_popup.remove();
                 // Set the buttonClicked flag to true
@@ -399,9 +432,21 @@ function map_initialization (map, options) {
             });
         }
 
-        
+        function captureSecondpoint() {
+            var searchInput = document.querySelector('.leaflet-control-search input.search-input');
+            if (searchInput) {
+                // Clear the search input
+                searchInput.value = '';
+                // Focus on the search input field to allow the user to enter the destination
+                searchInput.focus();
+                searchInput.placeholder = 'Enter the Second Location';
+            }
+            isFirstSearch = false;
+        }
+
         // Function to add a route
-        function addRouteToSearchedPoint(waypoints) {
+        function addRouteToSearchedPoint(StartPoint, EndPoint) {
+            waypoints = [StartPoint, EndPoint]
             if (waypoints) {
                 // Remove existing routing control
                 if (routingControl) {
@@ -412,6 +457,8 @@ function map_initialization (map, options) {
                 routingControl = L.Routing.control({
                     waypoints: waypoints
                 }).addTo(map);
+            }else {
+                console.error('Previous search query is not available.');
             }
         }
 
