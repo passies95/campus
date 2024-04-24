@@ -288,6 +288,7 @@ function map_initialization (map, options) {
 
         // Flag to retain previous search if button is clicked
         let isFirstSearch = true;
+        let isStartButtonClicked = false;
         let previousSearchQuery;
         var buttonClicked = false;
 
@@ -305,9 +306,13 @@ function map_initialization (map, options) {
             } else {
                 // Handle the second search location found event
                 var layer = handleSecondLocationFound(event.layer);
-                console.log(previousSearchQuery)
-                console.log(feature_coords)
-                addRouteToSearchedPoint(previousSearchQuery.reverse(), feature_coords.reverse())
+                // console.log(previousSearchQuery)
+                // console.log(feature_coords)
+                if (isStartButtonClicked) {
+                    addRouteToSearchedPoint(previousSearchQuery.reverse(), feature_coords.reverse())
+                } else {
+                    addRouteToSearchedPoint(feature_coords.reverse(),previousSearchQuery.reverse())
+                }
             }
             
         });
@@ -415,14 +420,16 @@ function map_initialization (map, options) {
                 navigation_popup.remove();
                 // Set the buttonClicked flag to true
                 buttonClicked = true;
+                isStartButtonClicked = true;
                 previousSearchQuery = feature_coords
-                console.log(previousSearchQuery)
+                // console.log(previousSearchQuery)
                 captureSecondpoint();
             });
 
             // Event listener for the "Go to this location" button
             destBtn.addEventListener('click', function() {
-                previousSearchQuery = latlng
+                isStartButtonClicked = false;
+                previousSearchQuery = feature_coords
                 // Capture the second set of points and add route
                 captureSecondpoint();
                 // Close the popup after clicking the button
